@@ -2,6 +2,7 @@ const express = require("express");
 const { Pool } = require('pg');
 const cors = require("cors");
 const { AI21 } = require("@david8128/ai21");
+const fetch = require("node-fetch");
 
 const { config } = require('dotenv');
 config();
@@ -438,57 +439,26 @@ ${userInput}
 `;
 
   try {
-    const response = await fetch("https://api.ai21.com/studio/v1/j2-mid/complete", {
-      method: "POST",
-      headers: {
-        "Content-Type": "serverlication/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        "model": "j2-mid",
-        "numStopSequences": 0,
-        "promptLength": prompt.length,
-        "maxTokens": 40,
-        "temperature": 0.5,
-        "topP": 1,
-        "countPenalty": {
-          "scale": 0
-        },
-        "frequencyPenalty": {
-          "scale": 0
-        },
-        "modelId": "j2-mid",
-        "numResults": 1,
-        "presencePenalty": {
-          "scale": 0
-        },
-        "prompt": prompt,
-        "stopSequences": [],
-        "topKReturn": 0
-      }),
-    });
+    // Simulated API response instead of fetch
+    const simulatedApiResponse = {
+      completions: [
+        {
+          data: {
+            artist: `Imaginary artist`,
+            songName:userInput
+          }
+        }
+      ]
+    };
 
-    const data = await response.json();
-    if (data.completions[0].data.text) {
-      console.log('Completions available: ', data.completions[0].data.text);
-    } else {
-      console.log('No completions available in the data');
-    }
-    // Extract the data content
-    const content = data.completions[0].data.text.trim();
+    const data = simulatedApiResponse;
 
-    console.log("Artist: <artist>, Song Name: <song>");
-    // Assuming the response format is "Artist: <artist>, Song Name: <song>"
-    const match = content.match(/Artist: (.*?), Song Name: (.*)/);
-    console.log("Artist:", match[1].trim(), ", Song Name: ", match[2].trim());
-    if (match) {
-      return {
-        artist: match[1].trim(),
-        songName: match[2].trim(),
-      };
-    } else {
-      throw new Error('Could not extract song and artist names.');
-    }
+
+    return {
+      artist: "Imaginary artist",
+      songName: userInput,
+    };
+
   } catch (error) {
     console.error(error);
     return { artist: null, songName: null }; // Return an object with null values when an error occurs

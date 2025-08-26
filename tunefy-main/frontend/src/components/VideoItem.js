@@ -5,7 +5,6 @@ function VideoItem({ title, videoId }) {
   const handleSendSong = async () => {
     const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/extract-song-artist`, { title: title });
     const { artist, songName } = response.data;
-    console.log(artist, songName);
     try {
       const response = await axios.post(`${process.env.REACT_APP_BACKEND_URL}/add-song`, {
         user_id: "null", // Since the user is not logged in, send null
