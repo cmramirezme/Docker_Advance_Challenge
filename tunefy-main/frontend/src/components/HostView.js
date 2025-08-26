@@ -315,6 +315,7 @@ function HostView() {
   const fetchPlaylist = async () => {
     try {
       const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/playlist`);
+      console.log("Backend URL:", process.env.REACT_APP_BACKEND_URL);
       const data = await response.json();
       setSongs(data.sort((a, b) => b.votes - a.votes));
       console.log("Playlist fetched successfully");
