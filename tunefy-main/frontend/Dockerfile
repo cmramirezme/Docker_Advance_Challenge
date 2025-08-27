@@ -1,4 +1,4 @@
-# Base image 
+# Base image
 FROM node:18-alpine
 
 # Set working directory inside the container
@@ -14,7 +14,7 @@ RUN npm install
 COPY . .
 
 # Expose a port (optional, for web apps)
-EXPOSE 3001
+EXPOSE 3000
 
 
 # Default command to run when container starts
