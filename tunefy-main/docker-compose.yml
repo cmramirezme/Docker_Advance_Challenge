@@ -26,7 +26,7 @@ services: # define the containers
       - backend-service
 
   db-service:
-    image: postgres:15
+    image: postgres:15-slim
     container_name: DB
     restart: on-failure # It restarts the container automatically only if it fails
     ports:
@@ -35,6 +35,7 @@ services: # define the containers
       - ./database/scripts/.env
     volumes:
       - db_data:/var/lib/postgresql/data
+      - ./database/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
 
 volumes:
   db_data:
