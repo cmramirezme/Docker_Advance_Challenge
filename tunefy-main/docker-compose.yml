@@ -1,0 +1,40 @@
+version: "3.9"  # or latest supported version
+
+services: # define the containers
+  backend-service:
+    build: ./backend
+    container_name: Backend
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=true
+    depends_on:
+      - db-service
+
+  frontend-service:
+    build: ./frontend
+    container_name: Frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+    environment: # Sets an enviroment variable inside the container
+      - ENVIROMENT_VARIABLE=true
+    depends_on:
+      - backend-service
+
+  db-service:
+    image: postgres:15
+    container_name: DB
+    restart: on-failure # It restarts the container automatically only if it fails
+    ports:
+      - "5432:5432"
+    env_file:
+      - ./database/scripts/.env
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+volumes:
+  db_data:
