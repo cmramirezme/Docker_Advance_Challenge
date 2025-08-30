@@ -1,41 +1,86 @@
-version: "3.9"  # or latest supported version
+version: "3.9"
 
-services: # define the containers
-  backend-service:
-    build: ./backend
-    container_name: Backend
+networks:
+  edge:
+    driver: bridge
+
+volumes:
+  db_data:
+
+services:
+  traefik:
+    image: traefik:v3.0
+    command:
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/etc/traefik"
+      - "--providers.file.watch=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--api.insecure=true" # dev only: dashboard on :8080
+      - "--log.level=INFO"
+
     ports:
-      - "3001:3001"
+      - "80:80"
+      - "443:443"
+      - "8080:8080" # http://localhost:8080
     volumes:
-      - ./backend:/app
-    environment:
-      - DEBUG=true
-    depends_on:
-      - db-service
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik:ro
+    networks:
+      - edge
 
   frontend-service:
     build: ./frontend
     container_name: Frontend
-    ports:
-      - "3000:3000"
+    # no host port mapping; Traefik routes traffic in
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.front.rule=Host(`app.localhost`)"
+      - "traefik.http.routers.front.entrypoints=web"
+      - "traefik.http.services.front.loadbalancer.server.port=3000"
     volumes:
       - ./frontend:/app
-    environment: # Sets an enviroment variable inside the container
+    environment:
       - ENVIROMENT_VARIABLE=true
     depends_on:
       - backend-service
+    networks:
+      - edge
+
+  backend-service:
+    build: ./backend
+    container_name: Backend
+    # no host port mapping; Traefik routes traffic in
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.api.rule=Host(`api.localhost`)"
+      - "traefik.http.routers.api.entrypoints=web"
+      - "traefik.http.services.api.loadbalancer.server.port=3001"
+      # optional healthcheck via Traefik:
+      # - "traefik.http.services.api.loadbalancer.healthcheck.path=/health"
+      # - "traefik.http.services.api.loadbalancer.healthcheck.interval=10s"
+    volumes:
+      - ./backend:/app
+    environment:
+      - DEBUG=true
+      # add DB connection env here if your app needs them, e.g.:
+      # - DB_HOST=db-service
+      # - DB_PORT=5432
+    depends_on:
+      - db-service
+    networks:
+      - edge
 
   db-service:
     image: postgres:15
     container_name: DB
-    restart: on-failure # It restarts the container automatically only if it fails
-    ports:
-      - "5431:5432"
+    restart: on-failure
+    # no host port mapping; backend connects on the internal network
     env_file:
       - ./database/scripts/.env
     volumes:
-      - ./db_data:/var/lib/postgresql/data
-      - ./database/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
-
-volumes:
-  db_data:
+      - db_data:/var/lib/postgresql/data
+      - ./database/scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - edge
